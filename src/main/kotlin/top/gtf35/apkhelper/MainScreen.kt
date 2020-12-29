@@ -71,7 +71,9 @@ fun main() {
         // 大小
         size = IntSize(500, 300),
         // icon
-        icon = R.icAppRounded()
+        icon = R.icAppRounded(),
+        // 禁用调整大小
+        resizable = false
     ) {
         createMain()
         initFileDrop()
