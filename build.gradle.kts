@@ -16,6 +16,10 @@ repositories {
     maven { url = uri("https://maven.pkg.jetbrains.space/public/p/compose/dev") }
 }
 
+sourceSets.main {
+    java.srcDirs("src/main/kotlin")
+}
+
 dependencies {
     implementation(compose.desktop.currentOs)
 }
