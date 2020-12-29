@@ -22,6 +22,7 @@ sourceSets.main {
 
 dependencies {
     implementation(compose.desktop.currentOs)
+    implementation("org.zeroturnaround:zt-exec:1.12")
 }
 
 tasks.withType<KotlinCompile>() {

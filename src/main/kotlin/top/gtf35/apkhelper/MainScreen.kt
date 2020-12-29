@@ -23,10 +23,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import org.zeroturnaround.exec.ProcessExecutor
+import org.zeroturnaround.exec.stream.LogOutputStream
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
@@ -34,6 +33,7 @@ import java.awt.dnd.DropTargetDropEvent
 import java.io.File
 
 private val path = mutableStateOf("")
+private val countdownInt = mutableStateOf(0)
 private val realStarted = mutableStateOf(false)
 private val cmdStr = mutableStateOf("")
 private val width = DpPropKey()
@@ -116,7 +116,6 @@ private fun BoxScope.createMsgText() {
 
 @Composable
 private fun BoxScope.createSmallWindow() {
-    //5
     val state = transition(
         definition = transitionDefinition,
         initState = !realStarted.value,
@@ -142,8 +141,10 @@ private fun BoxScope.createSmallWindow() {
             Image(downloadIcon, modifier = downloadIconModifier)
         } else {
             Column {
-                Spacer(Modifier.preferredHeight(20.dp))
-                Text(cmdStr.value, style = typography.body2, color = Color.White)
+                Text(R.cmdTitle + " * " + cmdStr.value, style = typography.body1, color = Color.White, modifier = Modifier.padding(10.dp))
+                Spacer(Modifier.preferredHeight(30.dp))
+                if (countdownInt.value > 0)
+                    Text(countdownInt.value.toString() + R.countDownClose, style = typography.body2, color = Color.White)
             }
         }
     }
@@ -159,7 +160,8 @@ private fun initFileDrop() {
                     .transferable.getTransferData(
                         DataFlavor.javaFileListFlavor) as List<*>
                 droppedFiles.first()?.let {
-                    path.value = (it as File).absolutePath
+                    val pathStr = (it as File).absolutePath
+                    if (pathStr.toLowerCase().endsWith(".apk")) path.value = pathStr
                 }
             } catch (ex: Exception) {
                 ex.printStackTrace()
@@ -169,14 +171,65 @@ private fun initFileDrop() {
     AppManager.windows.first().window.contentPane.dropTarget = target
 }
 
+@Suppress("BlockingMethodInNonBlockingContext")
 private fun doInstall() {
-    realStarted.value = true
-    CoroutineScope(Dispatchers.IO).launch {
+    val handler = CoroutineExceptionHandler { _, exception ->
+        CoroutineScope(Dispatchers.IO).launch {
+            println("CoroutineExceptionHandler got $exception")
+            cmdStr.value += "${R.installFinishFaild}\n"
 
-        delay(1500)
-
-        cmdStr.value = ""
-        path.value = ""
-        realStarted.value = false
+            for (i in (10 downTo 1)) {
+                countdownInt.value = i
+                delay(1000)
+            }
+            resetAll()
+        }
     }
+
+    realStarted.value = true
+
+    CoroutineScope(Dispatchers.IO).launch(handler) {
+        val adbCheckResult = ServiceShellUtils.execCommand("adb version", false, true, null)
+        val useInnerAdb = adbCheckResult.result < 0
+
+        println("use inner adb：$useInnerAdb")
+        cmdStr.value += if (useInnerAdb) "${R.useInnerAbd}\n" else "${R.useSystemAbd}\n"
+
+        ProcessExecutor().apply {
+            if (useInnerAdb) directory(File(System.getProperty("user.dir") + File.separator + "bin" ))
+            command("adb", "install", "-r" , path.value)
+            redirectOutput(object : LogOutputStream() {
+                override fun processLine(line: String?) {
+                    println("i:$line")
+                    cmdStr.value += "$line\n"
+                }
+            })
+            redirectError(
+                object : LogOutputStream() {
+                    override fun processLine(line: String?) {
+                        println("e:$line")
+                        cmdStr.value += "$line\n"
+                    }
+                }
+            )
+            exitValues(0)
+            readOutput(true)
+            execute().outputUTF8()
+        }
+
+        cmdStr.value += "${R.installFinishSuccess}\n"
+
+        for (i in (4 downTo 1)) {
+            countdownInt.value = i
+            delay(1000)
+        }
+        resetAll()
+    }
+}
+
+private fun resetAll() {
+    countdownInt.value = 0
+    cmdStr.value = ""
+    path.value = ""
+    realStarted.value = false
 }

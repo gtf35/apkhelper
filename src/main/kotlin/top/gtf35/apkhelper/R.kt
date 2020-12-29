@@ -10,6 +10,12 @@ object R {
     val selectPathHint = "已选："
     val startInstall = "点击👉按钮开始安装"
     val isInstalling = "正在安装"
+    val useInnerAbd = "使用内置 ADB"
+    val useSystemAbd = "使用系统 ADB"
+    val installFinishSuccess = "恭喜，安装完成"
+    val installFinishFaild = "安装失败"
+    val countDownClose = "s后关闭"
+    val cmdTitle = "终端"
 
     val shapeDp = 10
 
