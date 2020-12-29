@@ -197,9 +197,19 @@ private fun doInstall() {
         println("use inner adb：$useInnerAdb")
         cmdStr.value += if (useInnerAdb) "${R.useInnerAbd}\n" else "${R.useSystemAbd}\n"
 
+        if (useInnerAdb and !ServiceShellUtils.isWindows) {
+            cmdStr.value += R.otherSystemAdb
+            throw Exception("need adb")
+        }
+
         ProcessExecutor().apply {
             if (useInnerAdb) directory(File(System.getProperty("user.dir") + File.separator + "bin" ))
-            command("adb", "install", "-r" , path.value)
+            val cmdMain = if (useInnerAdb and ServiceShellUtils.isWindows) {
+                File(directory, "adbs.exe").absolutePath
+            } else {
+                "adb"
+            }
+            command(cmdMain, "install", "-r" , path.value)
             redirectOutput(object : LogOutputStream() {
                 override fun processLine(line: String?) {
                     println("i:$line")

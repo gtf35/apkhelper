@@ -16,6 +16,7 @@ object R {
     val installFinishFaild = "安装失败"
     val countDownClose = "s后关闭"
     val cmdTitle = "终端"
+    val otherSystemAdb = "非 Windows 系统请自行安装 ADB 工具"
 
     val shapeDp = 10
 
