@@ -34,7 +34,23 @@ compose.desktop {
         mainClass = "top.gtf35.apkhelper.MainScreenKt"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "top.gtf35.apkhelper"
+            packageName = "ApkInstallHelper"
+            version = "1.0.0"
+            description = "Help you install apk"
+            copyright = "© 2020 gtf35. All rights reserved."
+            vendor = "NekoProject"
+            macOS {
+                iconFile.set(project.file("art/icon.icns"))
+            }
+            windows {
+                iconFile.set(project.file("art/icon.ico"))
+                shortcut = true
+                dirChooser = true
+            }
+            linux {
+                iconFile.set(project.file("art/icon.png"))
+                shortcut = true
+            }
         }
     }
 }
