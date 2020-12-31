@@ -4,21 +4,20 @@ import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 
 object R {
-    val title = "安装器"
-    val titleDsp = "拖动到这里安装"
-    val selectNone = "尚未选择"
-    val selectPathHint = "已选："
-    val startInstall = "点击👉按钮开始安装"
-    val isInstalling = "正在安装"
-    val useInnerAbd = "使用内置 ADB"
-    val useSystemAbd = "使用系统 ADB"
-    val installFinishSuccess = "恭喜，安装完成"
-    val installFinishFaild = "安装失败"
-    val countDownClose = "s后关闭"
-    val cmdTitle = "终端"
-    val otherSystemAdb = "非 Windows 系统请自行安装 ADB 工具"
+    const val title = "安装器"
+    const val titleDsp = "拖动到这里安装"
+    const val selectPathHint = "已选："
+    const val startInstall = "点击👉按钮开始安装"
+    const val isInstalling = "正在安装"
+    const val useInnerAbd = "使用内置 ADB"
+    const val useSystemAbd = "使用系统 ADB"
+    const val installFinishSuccess = "恭喜，安装完成"
+    const val installFinishFaild = "安装失败"
+    const val countDownClose = "s后关闭"
+    const val cmdTitle = "终端"
+    const val otherSystemAdb = "非 Windows 系统请自行安装 ADB 工具"
 
-    val shapeDp = 10
+    const val shapeDp = 10
 
     private var icon: BufferedImage? = null
     fun icAppRounded(): BufferedImage {
