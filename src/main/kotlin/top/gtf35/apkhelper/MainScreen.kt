@@ -39,6 +39,7 @@ private val cmdStr = mutableStateOf("")
 private val width = DpPropKey()
 private val color = ColorPropKey()
 
+/** 创建补间动画 */
 val transitionDefinition = transitionDefinition<Boolean> {
 
     state(false) {
@@ -80,6 +81,9 @@ fun main() {
     }
 }
 
+/**
+ * 创建主窗口
+ */
 @Composable
 private fun createMain() {
     MaterialTheme {
@@ -92,6 +96,9 @@ private fun createMain() {
     }
 }
 
+/**
+ * 创建左上角的提示文本
+ */
 @Composable
 private fun BoxScope.createMsgText() {
     val msgTextModifier = Modifier
@@ -116,6 +123,9 @@ private fun BoxScope.createMsgText() {
     }
 }
 
+/**
+ * 创建右下角的小窗口
+ */
 @Composable
 private fun BoxScope.createSmallWindow() {
     val state = transition(
@@ -152,6 +162,9 @@ private fun BoxScope.createSmallWindow() {
     }
 }
 
+/**
+ * 初始化拖拽的事件
+ */
 private fun initFileDrop() {
     val target = object : DropTarget() {
         @Synchronized
@@ -163,6 +176,7 @@ private fun initFileDrop() {
                         DataFlavor.javaFileListFlavor) as List<*>
                 droppedFiles.first()?.let {
                     val pathStr = (it as File).absolutePath
+                    // 只安装 apk
                     if (pathStr.toLowerCase().endsWith(".apk")) path.value = pathStr
                 }
             } catch (ex: Exception) {
@@ -173,8 +187,12 @@ private fun initFileDrop() {
     AppManager.windows.first().window.contentPane.dropTarget = target
 }
 
+/**
+ * 执行安装的实际逻辑
+ */
 @Suppress("BlockingMethodInNonBlockingContext")
 private fun doInstall() {
+    // 异常处理，在 adb 返回值不是 0 的时候，会抛出异常，在这里统一处理
     val handler = CoroutineExceptionHandler { _, exception ->
         CoroutineScope(Dispatchers.IO).launch {
             println("CoroutineExceptionHandler got $exception")
@@ -188,23 +206,30 @@ private fun doInstall() {
         }
     }
 
+    // 标记已经开始安装，切换 UI 到安装状态
     realStarted.value = true
 
+    // 在协程里安装，其中的安装语句均为阻塞的
     CoroutineScope(Dispatchers.IO).launch(handler) {
+        // 通过在系统执行「adb version」来判断系统有没有安装 adb，没安装使用内置的
         val adbCheckResult = ServiceShellUtils.execCommand("adb version", false, true, null)
         val useInnerAdb = adbCheckResult.result < 0
 
         println("use inner adb：$useInnerAdb")
         cmdStr.value += if (useInnerAdb) "${R.useInnerAbd}\n" else "${R.useSystemAbd}\n"
 
+        // 只自带了 Windows 平台的，其余平台需要自己在系统安装
         if (useInnerAdb and !ServiceShellUtils.isWindows) {
             cmdStr.value += R.otherSystemAdb
             throw Exception("need adb")
         }
 
+        // 执行安装流程「adb install -r apk_path」
+        // 如果使用内置的 adb 需要设置工作目录
         ProcessExecutor().apply {
             if (useInnerAdb) directory(File(System.getProperty("user.dir") + File.separator + "bin" ))
             val cmdMain = if (useInnerAdb and ServiceShellUtils.isWindows) {
+                // 必须使用全路径（绝对路径）
                 File(directory, "adbs.exe").absolutePath
             } else {
                 "adb"
@@ -229,6 +254,7 @@ private fun doInstall() {
             execute().outputUTF8()
         }
 
+        // 结束后倒计时复位
         cmdStr.value += "${R.installFinishSuccess}\n"
 
         for (i in (4 downTo 1)) {
@@ -239,6 +265,9 @@ private fun doInstall() {
     }
 }
 
+/**
+ * 重置所有的参数来复位 UI 到初始化状态
+ */
 private fun resetAll() {
     countdownInt.value = 0
     cmdStr.value = ""
